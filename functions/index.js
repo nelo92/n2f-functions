@@ -6,7 +6,7 @@ const logger = functions.logger;
 
 const admin = require('firebase-admin');
 
-var serviceAccount = require("./firestore/nodedefrais-firebase-adminsdk.json");
+var serviceAccount = require("./firebase/nodedefrais-firebase-adminsdk.json");
 
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
