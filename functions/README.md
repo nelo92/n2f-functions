@@ -6,7 +6,7 @@ Creator MAU
 
 https://console.firebase.google.com/project/nodedefrais/overview
 
-https://us-central1-nodedefrais.cloudfunctions.net/api
+https://europe-west1-nodedefrais.cloudfunctions.net/api
 
 http://localhost:5001/nodedefrais-functions/us-central1/api
 

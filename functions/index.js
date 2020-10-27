@@ -31,44 +31,22 @@ const FIREBASE_COLLECTION = "datas";
 const FIREBASE_FIELD_DATE = "date";
 const FIREBASE_FIELD_AMOUNT = "amount";
 
-const moment = require('moment');
-moment().locale('fr');
+// const moment = require('moment');
+// moment().locale('fr');
 
 app.get('/isUp', (req, res) => {
     res.sendStatus(200);
 });
 
 app.get('/exportAll', (req, res) => {
-    logger.info("exportAll...");
     loadDatas(res, {});
-    logger.info("exportAll.");
 });
 
 app.get('/export/:year/:month', (req, res) => {
-    logger.info("export...");
     var year = req.params.year;
     var month = req.params.month;
-    logger.info("year=", year);
-    logger.info("month=", month);
     loadDatas(res, createFilter(year, month));
-    logger.info("export.");
 });
-
-function logDate(d) {
-    let date = ("0" + d.getDate()).slice(-2);
-    let month = ("0" + (d.getMonth() + 1)).slice(-2);
-    let year = d.getFullYear();
-    logger.info(" date ->", d);
-    logger.info(" date.toLocaleString ->", d.toLocaleString());
-    return date + "/" + month + "/" + year;
-}
-
-function formatDate(d) {
-    let date = ("0" + d.getDate()).slice(-2);
-    let month = ("0" + (d.getMonth() + 1)).slice(-2);
-    let year = d.getFullYear();
-    return date + "/" + month + "/" + year;
-}
 
 
 function createFilter(year, month) {
@@ -76,17 +54,27 @@ function createFilter(year, month) {
     start.setHours(0, 0, 0, 0);
     let end = new Date(year, (month - 1) + 1, 1);
     end.setHours(0, 0, 0, 0);
+    // logger.info("year=", year);
+    // logger.info("month=", month);
     return { start: start, end: end };
 }
 
+function formartDate(d) {
+    let date = ("0" + d.getDate()).slice(-2);
+    let month = ("0" + (d.getMonth() + 1)).slice(-2);
+    let year = d.getFullYear();
+    return date + "/" + month + "/" + year;
+}
+
+// function w(text) {
+//     return ((text) ? text : "") + "</br>"
+// }
+
 function loadDatas(res, filter) {
-    logger.info("loadDatas...");
     let datas = [];
     let query = firestore.collection(FIREBASE_COLLECTION);
-
-    logger.info("filter.start=", logDate(filter.start));
-    logger.info("filter.end=", logDate(filter.end));
-
+    // logger.info("filter.start=", formartDate(filter.start));
+    // logger.info("filter.end=", formartDate(filter.end));
     if (filter.start && filter.end) {
         query = query
             .where("date", ">=", filter.start)
@@ -96,10 +84,10 @@ function loadDatas(res, filter) {
     const snapshot = query.get();
     snapshot.then(querySnapshot => {
         querySnapshot.docs.forEach(doc => {
-            let d = doc.get(FIREBASE_FIELD_DATE).toDate();
-            let m = new moment(d).locale("fr");
+            // let d = doc.get(FIREBASE_FIELD_DATE).toDate();
+            // let r = formartDate(d);
             datas.push({
-                date: m.format("L"),
+                date: formartDate(doc.get(FIREBASE_FIELD_DATE).toDate()),
                 amount: doc.get(FIREBASE_FIELD_AMOUNT)
             });
         });
@@ -114,18 +102,13 @@ function loadDatas(res, filter) {
 }
 
 function logDatas(datas) {
-    logger.info("log...");
-    logger.info("datas length :", datas.length);
     for (let i = 0; i < datas.length; i += 1) {
-        logger.info("date=", datas[i].date);
-        logger.info("amount=", datas[i].amount);
+        logger.info("logDatas: date=", datas[i].date, ", amount=", datas[i].amount);
     }
-    logger.info("log.");
 }
 
 function createXls(res, datas) {
-    logger.info("createXls...");
-
+    // logger.info("createXls...");
     // logDatas(datas);
 
     const workbook = new excel.Workbook();
@@ -151,10 +134,10 @@ function createXls(res, datas) {
     worksheet.getColumn(2).width = 12;
 
     workbook.xlsx.write(res);
-    logger.info("createXls.");
+    // logger.info("createXls.");
 }
 
-const api = functions.https.onRequest(app);
+const api = functions.region("europe-west1").https.onRequest(app);
 
 module.exports = {
     api
