@@ -34,6 +34,10 @@ const FIREBASE_FIELD_AMOUNT = "amount";
 // const moment = require('moment');
 // moment().locale('fr');
 
+// --------------------------------------------------------
+// api rest 
+// --------------------------------------------------------
+
 app.get('/isUp', (req, res) => {
     res.sendStatus(200);
 });
@@ -48,6 +52,15 @@ app.get('/export/:year/:month', (req, res) => {
     loadDatas(res, createFilter(year, month));
 });
 
+const api = functions.region("europe-west1").https.onRequest(app);
+
+module.exports = {
+    api
+};
+
+// --------------------------------------------------------
+// function 
+// --------------------------------------------------------
 
 function createFilter(year, month) {
     let start = new Date(year, month - 1, 1);
@@ -66,7 +79,7 @@ function formartDate(d) {
     return date + "/" + month + "/" + year;
 }
 
-// function w(text) {
+// function br(text) {
 //     return ((text) ? text : "") + "</br>"
 // }
 
@@ -84,10 +97,10 @@ function loadDatas(res, filter) {
     const snapshot = query.get();
     snapshot.then(querySnapshot => {
         querySnapshot.docs.forEach(doc => {
-            // let d = doc.get(FIREBASE_FIELD_DATE).toDate();
-            // let r = formartDate(d);
+            let d = doc.get(FIREBASE_FIELD_DATE).toDate();
+            let r = formartDate(d);
             datas.push({
-                date: formartDate(doc.get(FIREBASE_FIELD_DATE).toDate()),
+                date: r,
                 amount: doc.get(FIREBASE_FIELD_AMOUNT)
             });
         });
@@ -98,33 +111,27 @@ function loadDatas(res, filter) {
         res.sendStatus(500);
         return;
     });
-    logger.info("loadDatas.");
-}
-
-function logDatas(datas) {
-    for (let i = 0; i < datas.length; i += 1) {
-        logger.info("logDatas: date=", datas[i].date, ", amount=", datas[i].amount);
-    }
 }
 
 function createXls(res, datas) {
-    // logger.info("createXls...");
-    // logDatas(datas);
-
     const workbook = new excel.Workbook();
     const worksheet = workbook.addWorksheet(XLS_SHEET_NAME);
 
     // row header
-    let row = worksheet.addRow([XLS_HEADER_DATE, XLS_HEADER_AMOUNT]);
+    const row = worksheet.addRow([XLS_HEADER_DATE, XLS_HEADER_AMOUNT]);
     row.font = { bold: true };
 
     // row data
     for (let i = 0; i < datas.length; i += 1) {
-        let row = worksheet.addRow([datas[i].date, datas[i].amount]);
-        row.getCell(1).numFmt = "dd/mm/yyyy";
-        row.getCell(2).numFmt = "0.00";
-        row.getCell(2).alignment = { horizontal: 'right' };
+        logger.info("date=", datas[i].date, ", amount=", datas[i].amount);
+        const row_data = worksheet.addRow([datas[i].date, datas[i].amount]);
+        // row_data.getCell(1).numFmt = "dd/mm/yyyy";
+        // row_data.getCell(2).numFmt = "0.00";
+        row_data.getCell(1).numFmt = "@";
+        row_data.getCell(2).numFmt = "@";
+        row_data.getCell(2).alignment = { horizontal: 'right' };
     }
+
     // create file
     res.setHeader('Content-Disposition', 'attachment; filename=' + XLS_FILE_NAME);
     res.setHeader('Content-Type', 'application/octet-stream');
@@ -133,12 +140,6 @@ function createXls(res, datas) {
     worksheet.getColumn(1).width = 12;
     worksheet.getColumn(2).width = 12;
 
+    // xls send to response
     workbook.xlsx.write(res);
-    // logger.info("createXls.");
 }
-
-const api = functions.region("europe-west1").https.onRequest(app);
-
-module.exports = {
-    api
-};
