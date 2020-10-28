@@ -11,28 +11,33 @@ admin.initializeApp({
 
 const firestore = admin.firestore();
 
+const excel = require("exceljs");
 const cors = require("cors");
 const express = require("express");
 const app = express();
-
-const excel = require("exceljs");
-
 app.use(cors({ origin: true }));
 
-const DATE_FORMAT = "dd/MM/yyyy";
+// Date 
+const moment = require('moment');
+moment.locale('fr');
 
+// --------------------------------------------------------
+// constantes
+// --------------------------------------------------------
+
+// Xls
 const XLS_SHEET_NAME = "N2F";
+const XLS_FILE_NAME = "export-n2f.xlsx";
 const XLS_HEADER_DATE = "Date";
 const XLS_HEADER_AMOUNT = "Amount";
-const XLS_CELL_FORMAT_DECIMAL = "0.00";
-const XLS_FILE_NAME = "export-n2f.xlsx";
+// const XLS_CELL_FORMAT_DATE = "dd/mm/yyyy";
+const XLS_CELL_FORMAT_DATE = "@";
+const XLS_CELL_FORMAT_AMOUNT = "# ###.00";
 
+// Firebaase 
 const FIREBASE_COLLECTION = "datas";
 const FIREBASE_FIELD_DATE = "date";
 const FIREBASE_FIELD_AMOUNT = "amount";
-
-// const moment = require('moment');
-// moment().locale('fr');
 
 // --------------------------------------------------------
 // api rest 
@@ -62,47 +67,51 @@ module.exports = {
 // function 
 // --------------------------------------------------------
 
+function br(text) {
+    return ((text) ? text : "") + "</br>"
+}
+
+function formatDate(d) {
+    return new moment(d).format("L");
+}
+
+// function formartDate(d) {
+//     let date = ("0" + d.getDate()).slice(-2);
+//     let month = ("0" + (d.getMonth() + 1)).slice(-2);
+//     let year = d.getFullYear();
+//     return date + "/" + month + "/" + year;
+// }
+
 function createFilter(year, month) {
+    // logger.info("createFilter: year=", year, "month=", month);    
     let start = new Date(year, month - 1, 1);
     start.setHours(0, 0, 0, 0);
     let end = new Date(year, (month - 1) + 1, 1);
     end.setHours(0, 0, 0, 0);
-    // logger.info("year=", year);
-    // logger.info("month=", month);
     return { start: start, end: end };
 }
 
-function formartDate(d) {
-    let date = ("0" + d.getDate()).slice(-2);
-    let month = ("0" + (d.getMonth() + 1)).slice(-2);
-    let year = d.getFullYear();
-    return date + "/" + month + "/" + year;
-}
-
-// function br(text) {
-//     return ((text) ? text : "") + "</br>"
-// }
-
 function loadDatas(res, filter) {
+    // logger.info("filter: start=", formartDate(filter.start), "end=", formartDate(filter.end));    
     let datas = [];
     let query = firestore.collection(FIREBASE_COLLECTION);
-    // logger.info("filter.start=", formartDate(filter.start));
-    // logger.info("filter.end=", formartDate(filter.end));
     if (filter.start && filter.end) {
         query = query
-            .where("date", ">=", filter.start)
-            .where("date", "<", filter.end);
+            .where(FIREBASE_FIELD_DATE, ">=", filter.start)
+            .where(FIREBASE_FIELD_DATE, "<", filter.end);
     }
     query = query.orderBy(FIREBASE_FIELD_DATE, "asc");
     const snapshot = query.get();
     snapshot.then(querySnapshot => {
         querySnapshot.docs.forEach(doc => {
+            // date
             let d = doc.get(FIREBASE_FIELD_DATE).toDate();
-            let r = formartDate(d);
-            datas.push({
-                date: r,
-                amount: doc.get(FIREBASE_FIELD_AMOUNT)
-            });
+            let rd = formatDate(d);
+            // amount 
+            let a = doc.get(FIREBASE_FIELD_AMOUNT);
+            let ra = parseInt(a);
+            // push in array datas 
+            datas.push({ date: rd, amount: ra });
         });
         createXls(res, datas);
         return;
@@ -116,30 +125,23 @@ function loadDatas(res, filter) {
 function createXls(res, datas) {
     const workbook = new excel.Workbook();
     const worksheet = workbook.addWorksheet(XLS_SHEET_NAME);
-
     // row header
     const row = worksheet.addRow([XLS_HEADER_DATE, XLS_HEADER_AMOUNT]);
     row.font = { bold: true };
-
     // row data
     for (let i = 0; i < datas.length; i += 1) {
-        logger.info("date=", datas[i].date, ", amount=", datas[i].amount);
+        // logger.info("date=", datas[i].date, ", amount=", datas[i].amount);
         const row_data = worksheet.addRow([datas[i].date, datas[i].amount]);
-        // row_data.getCell(1).numFmt = "dd/mm/yyyy";
-        // row_data.getCell(2).numFmt = "0.00";
-        row_data.getCell(1).numFmt = "@";
-        row_data.getCell(2).numFmt = "@";
+        row_data.getCell(1).numFmt = XLS_CELL_FORMAT_DATE;
+        row_data.getCell(2).numFmt = XLS_CELL_FORMAT_AMOUNT;
         row_data.getCell(2).alignment = { horizontal: 'right' };
     }
-
     // create file
     res.setHeader('Content-Disposition', 'attachment; filename=' + XLS_FILE_NAME);
     res.setHeader('Content-Type', 'application/octet-stream');
-
     // set column with
     worksheet.getColumn(1).width = 12;
     worksheet.getColumn(2).width = 12;
-
     // xls send to response
     workbook.xlsx.write(res);
 }
