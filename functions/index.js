@@ -35,9 +35,11 @@ const XLS_CELL_FORMAT_DATE = "@";
 const XLS_CELL_FORMAT_AMOUNT = "# ###.00";
 
 // Firebaase 
-const FIREBASE_COLLECTION = "datas";
+const FIREBASE_COLLECTION_DATAS = "datas";
 const FIREBASE_FIELD_DATE = "date";
 const FIREBASE_FIELD_AMOUNT = "amount";
+
+const FIREBASE_COLLECTION_USERS = "users";
 
 // --------------------------------------------------------
 // api rest 
@@ -45,23 +47,25 @@ const FIREBASE_FIELD_AMOUNT = "amount";
 
 app.get('/isUp', (req, res) => {
     res.sendStatus(200);
-});
+})
 
 app.get('/exportAll', (req, res) => {
     loadDatas(res, {});
-});
+})
 
-app.get('/export/:year/:month', (req, res) => {
+app.get('/export/:uid/:year/:month', (req, res) => {
+    var uid = req.params.uid;
     var year = req.params.year;
     var month = req.params.month;
-    loadDatas(res, createFilter(year, month));
-});
+    loadDatas(res, createFilter(uid, year, month));
+})
 
+// set region for api
 const api = functions.region("europe-west1").https.onRequest(app);
 
 module.exports = {
     api
-};
+}
 
 // --------------------------------------------------------
 // function 
@@ -75,26 +79,26 @@ function formatDate(d) {
     return new moment(d).format("L");
 }
 
-// function formartDate(d) {
+// function formatDate(d) {
 //     let date = ("0" + d.getDate()).slice(-2);
 //     let month = ("0" + (d.getMonth() + 1)).slice(-2);
 //     let year = d.getFullYear();
 //     return date + "/" + month + "/" + year;
 // }
 
-function createFilter(year, month) {
-    // logger.info("createFilter: year=", year, "month=", month);    
+function createFilter(uid, year, month) {
+    // logger.info("createFilter: uid=", uid, "year=", year, "month=", month);
     let start = new Date(year, month - 1, 1);
     start.setHours(0, 0, 0, 0);
     let end = new Date(year, (month - 1) + 1, 1);
     end.setHours(0, 0, 0, 0);
-    return { start: start, end: end };
+    return { uid: uid, start: start, end: end };
 }
 
 function loadDatas(res, filter) {
-    // logger.info("filter: start=", formartDate(filter.start), "end=", formartDate(filter.end));    
+    // logger.info("filter: start=", formatDate(filter.start), "end=", formatDate(filter.end));
     let datas = [];
-    let query = firestore.collection(FIREBASE_COLLECTION);
+    let query = firestore.collection(`${FIREBASE_COLLECTION_USERS}/${filter.uid}/${FIREBASE_COLLECTION_DATAS}`);
     if (filter.start && filter.end) {
         query = query
             .where(FIREBASE_FIELD_DATE, ">=", filter.start)
