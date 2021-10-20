@@ -10,6 +10,10 @@ https://europe-west1-nodedefrais.cloudfunctions.net/api
 
 http://localhost:5001/nodedefrais/europe-west1/api
 
+## Project configuration
+
+Need file <nodedefrais-firebase-adminsdk.json> and put it in directory functions/firebase
+
 ## Version
 
 ## Firebase reference
