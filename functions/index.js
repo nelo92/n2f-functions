@@ -113,7 +113,7 @@ function loadDatas(res, filter) {
             let rd = formatDate(d);
             // amount 
             let a = doc.get(FIREBASE_FIELD_AMOUNT);
-            let ra = parseInt(a);
+            let ra = parseFloat(a);
             // push in array datas 
             datas.push({ date: rd, amount: ra });
         });
