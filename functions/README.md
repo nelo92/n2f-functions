@@ -6,9 +6,19 @@ Creator MAU
 
 https://console.firebase.google.com/project/nodedefrais/overview
 
+## API
+
+1. Environnement production
+
 https://europe-west1-nodedefrais.cloudfunctions.net/api
 
-http://localhost:5001/nodedefrais/europe-west1/api
+[Call isUp](https://europe-west1-nodedefrais.cloudfunctions.net/api/isup)
+
+2. Environnement Local
+
+   http://localhost:5001/nodedefrais/europe-west1/api
+
+   [Call isUp](http://localhost:5001/nodedefrais/europe-west1/api/isUp)
 
 ## Project configuration
 
