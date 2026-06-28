@@ -24,12 +24,27 @@ https://europe-west1-nodedefrais.cloudfunctions.net/api
 
 Need file <nodedefrais-firebase-adminsdk.json> and put it in directory functions/firebase
 
+## Installation et exécution
+
+Avant de lancer les scripts, il faut se placer dans le répertoire functions puis installer les dépendances :
+
+```bash
+cd functions
+npm install
+```
+
+Scripts disponibles :
+
+- `npm run lint` : vérifie le code avec ESLint.
+- `npm run serve` : démarre les émulateurs Firebase pour tester les Cloud Functions localement.
+- `npm run shell` : ouvre un shell Firebase pour tester les fonctions.
+- `npm run start` : lance le shell Firebase.
+- `npm run deploy` : déploie les fonctions sur Firebase.
+- `npm run logs` : affiche les logs des fonctions.
+
 ## Version
 
 ## Firebase reference
 
 Create and Deploy Your First Cloud Functions
 https://firebase.google.com/docs/functions/write-firebase-functions
-
-// /_ eslint-disable promise/catch-or-return _/
-// /_ eslint-disable promise/always-return _/
